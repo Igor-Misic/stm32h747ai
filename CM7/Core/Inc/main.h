@@ -57,10 +57,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define LRGB_RED_1_Pin GPIO_PIN_4
-#define LRGB_RED_1_GPIO_Port GPIOA
-#define LRGB_RED_2_Pin GPIO_PIN_9
-#define LRGB_RED_2_GPIO_Port GPIOE
+#define LRGB_RED_Pin GPIO_PIN_4
+#define LRGB_RED_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 

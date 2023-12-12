@@ -52,8 +52,7 @@ UART_HandleTypeDef huart8;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-void SystemClock_ConfigLowClock(void);
-void SystemClock_ConfigHighClock(void);
+void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_UART8_Init(void);
 /* USER CODE BEGIN PFP */
@@ -88,23 +87,11 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-  SystemClock_ConfigLowClock();
 
   /* USER CODE END Init */
-  MX_GPIO_Init();
 
-  while(1) {
-	  HAL_Delay(500);
-	  HAL_GPIO_WritePin(LRGB_RED_1_GPIO_Port, LRGB_RED_1_Pin, GPIO_PIN_RESET);
-	  HAL_GPIO_WritePin(LRGB_RED_2_GPIO_Port, LRGB_RED_2_Pin, GPIO_PIN_RESET);
-	  SystemClock_ConfigLowClock();
-
-	  HAL_Delay(500);
-	  HAL_GPIO_WritePin(LRGB_RED_1_GPIO_Port, LRGB_RED_1_Pin, GPIO_PIN_SET);
-	  HAL_GPIO_WritePin(LRGB_RED_2_GPIO_Port, LRGB_RED_2_Pin, GPIO_PIN_SET);
-	  SystemClock_ConfigHighClock();
-  }
-
+  /* Configure the system clock */
+  SystemClock_Config();
 /* USER CODE BEGIN Boot_Mode_Sequence_2 */
 /* When system initialization is finished, Cortex-M7 will release Cortex-M4 by means of
 HSEM notification */
@@ -128,6 +115,7 @@ Error_Handler();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
+  MX_GPIO_Init();
   MX_UART8_Init();
   /* USER CODE BEGIN 2 */
 
@@ -137,9 +125,9 @@ Error_Handler();
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
+	  uint8_t Test[] = "Hello World !!!\r\n"; //Data to send
+	  HAL_UART_Transmit(&huart8,Test,sizeof(Test),10);// Sending in normal mode
+	  HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
@@ -148,66 +136,7 @@ Error_Handler();
   * @brief System Clock Configuration
   * @retval None
   */
-void SystemClock_ConfigLowClock(void)
-{
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-
-  /** Supply configuration update enable
-  */
-  HAL_PWREx_ConfigSupply(PWR_LDO_SUPPLY);
-
-  /** Configure the main internal regulator output voltage
-  */
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
-
-  while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
-
-  /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_DIV1;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 60;
-  RCC_OscInitStruct.PLL.PLLP = 16;
-  RCC_OscInitStruct.PLL.PLLQ = 2;
-  RCC_OscInitStruct.PLL.PLLR = 2;
-  RCC_OscInitStruct.PLL.PLLRGE = RCC_PLL1VCIRANGE_3;
-  RCC_OscInitStruct.PLL.PLLVCOSEL = RCC_PLL1VCOWIDE;
-  RCC_OscInitStruct.PLL.PLLFRACN = 0;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2
-                              |RCC_CLOCKTYPE_D3PCLK1|RCC_CLOCKTYPE_D1PCLK1;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-  RCC_ClkInitStruct.SYSCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB3CLKDivider = RCC_APB3_DIV2;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_APB1_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_APB2_DIV2;
-  RCC_ClkInitStruct.APB4CLKDivider = RCC_APB4_DIV2;
-
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
-  {
-    Error_Handler();
-  }
-}
-
-/**
-  * @brief System Clock Configuration
-  * @retval None
-  */
-void SystemClock_ConfigHighClock(void)
+void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
@@ -225,7 +154,7 @@ void SystemClock_ConfigHighClock(void)
   __HAL_RCC_SYSCFG_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE0);
 
-  //while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
+  while(!__HAL_PWR_GET_FLAG(PWR_FLAG_VOSRDY)) {}
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -245,7 +174,7 @@ void SystemClock_ConfigHighClock(void)
   RCC_OscInitStruct.PLL.PLLFRACN = 0;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
-    //Error_Handler();
+    Error_Handler();
   }
 
   /** Initializes the CPU, AHB and APB buses clocks
@@ -263,7 +192,7 @@ void SystemClock_ConfigHighClock(void)
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
   {
-    //Error_Handler();
+    Error_Handler();
   }
 }
 
@@ -327,29 +256,18 @@ static void MX_GPIO_Init(void)
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
+  __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LRGB_RED_1_GPIO_Port, LRGB_RED_1_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(LRGB_RED_2_GPIO_Port, LRGB_RED_2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(LRGB_RED_GPIO_Port, LRGB_RED_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : LRGB_RED_1_Pin */
-  GPIO_InitStruct.Pin = LRGB_RED_1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  /*Configure GPIO pin : LRGB_RED_Pin */
+  GPIO_InitStruct.Pin = LRGB_RED_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LRGB_RED_1_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : LRGB_RED_2_Pin */
-  GPIO_InitStruct.Pin = LRGB_RED_2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LRGB_RED_2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(LRGB_RED_GPIO_Port, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
